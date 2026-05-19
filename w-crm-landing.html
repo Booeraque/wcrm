@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W CRM — Klaviyo dla Baselinker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --brand: #10B981;
+    --brand-dark: #059669;
+    --brand-light: #D1FAE5;
+    --brand-soft: #ECFDF5;
+    --ink: #0F172A;
+    --ink-soft: #334155;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --bg: #FAFAF9;
+  }
+  * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  body {
+    color: var(--ink);
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === Buttons === */
+  .btn-primary {
+    background: var(--brand);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(16,185,129,.18), 0 4px 12px rgba(16,185,129,.18);
+  }
+  .btn-primary:hover {
+    background: var(--brand-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(16,185,129,.25), 0 12px 24px rgba(16,185,129,.25);
+  }
+  .btn-secondary {
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all .25s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--brand); color: var(--brand-dark); transform: translateY(-1px); }
+
+  /* === Text & gradients === */
+  .grad-text {
+    background: linear-gradient(135deg, #10B981 0%, #059669 60%, #047857 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* === Cards === */
+  .card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    transition: all .3s cubic-bezier(.4,0,.2,1);
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgba(16,185,129,.5);
+    box-shadow: 0 12px 32px rgba(15,23,42,.06), 0 4px 12px rgba(16,185,129,.08);
+  }
+
+  /* === Badges === */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .b-green { background: var(--brand-soft); color: var(--brand-dark); }
+  .b-orange { background: #FFF7ED; color: #C2410C; }
+  .b-red { background: #FEF2F2; color: #B91C1C; }
+  .b-blue { background: #EFF6FF; color: #1D4ED8; }
+  .b-slate { background: #F1F5F9; color: #475569; }
+
+  /* === Animations === */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .55; }
+  }
+  @keyframes ping-soft {
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes grow-bar {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-stagger > * { opacity: 0; transform: translateY(15px); transition: opacity .6s, transform .6s; }
+  .reveal-stagger.visible > * { opacity: 1; transform: translateY(0); }
+  .reveal-stagger.visible > *:nth-child(1) { transition-delay: .05s; }
+  .reveal-stagger.visible > *:nth-child(2) { transition-delay: .15s; }
+  .reveal-stagger.visible > *:nth-child(3) { transition-delay: .25s; }
+  .reveal-stagger.visible > *:nth-child(4) { transition-delay: .35s; }
+  .reveal-stagger.visible > *:nth-child(5) { transition-delay: .45s; }
+
+  .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--brand);
+    position: relative;
+  }
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--brand);
+    animation: ping-soft 1.8s cubic-bezier(0,0,.2,1) infinite;
+  }
+
+  .floating { animation: float 4s ease-in-out infinite; }
+
+  /* === Hero bg === */
+  .hero-bg {
+    background:
+      radial-gradient(circle at 15% 20%, rgba(16,185,129,.10), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(5,150,105,.08), transparent 45%),
+      linear-gradient(180deg, #fff 0%, #FAFAF9 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(16,185,129,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(16,185,129,.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  }
+
+  /* === App mockup (mimics Renew CRM screens) === */
+  .app-mock {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 0 rgba(0,0,0,.02),
+      0 20px 40px -10px rgba(15,23,42,.10),
+      0 8px 16px -6px rgba(15,23,42,.06);
+    overflow: hidden;
+  }
+  .app-bar {
+    background: white;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .app-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .app-tab {
+    color: var(--muted);
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .app-tab.active {
+    background: var(--brand-soft);
+    color: var(--brand-dark);
+    font-weight: 600;
+  }
+  .mock-row {
+    display: grid;
+    grid-template-columns: 1.5fr 0.7fr 0.6fr 0.7fr 0.5fr 0.6fr;
+    padding: 10px 14px;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 12px;
+    align-items: center;
+    gap: 8px;
+  }
+  .mock-row.head {
+    background: #FAFAF9;
+    font-weight: 600;
+    color: #64748B;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: .04em;
+  }
+
+  /* === Demo tabs === */
+  .demo-tab {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 14px;
+    border: 1.5px solid transparent;
+  }
+  .demo-tab.active {
+    background: var(--brand);
+    color: white;
+    border-color: var(--brand);
+    box-shadow: 0 4px 12px rgba(16,185,129,.25);
+  }
+  .demo-tab:not(.active) {
+    color: var(--ink-soft);
+    background: white;
+    border-color: var(--line);
+  }
+  .demo-tab:not(.active):hover { border-color: var(--brand); color: var(--brand-dark); }
+
+  /* === Pricing === */
+  .pricing-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 30px 26px;
+    transition: all .3s;
+  }
+  .pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(15,23,42,.08);
+    border-color: rgba(16,185,129,.4);
+  }
+  .pricing-card.featured {
+    background: linear-gradient(180deg, #064E3B 0%, #022C22 100%);
+    color: white;
+    border: none;
+    transform: scale(1.03);
+    box-shadow: 0 20px 50px rgba(6,78,59,.35);
+    position: relative;
+  }
+  .pricing-card.featured .price-sub,
+  .pricing-card.featured li { color: rgba(255,255,255,.85); }
+
+  /* === Table === */
+  .cmp-table { width: 100%; border-collapse: collapse; }
+  .cmp-table th, .cmp-table td { padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 14px; text-align: left; }
+  .cmp-table th { background: #FAFAF9; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748B; }
+  .cmp-table tr:hover { background: #FAFAF9; }
+  .check { color: var(--brand); font-weight: 700; }
+  .cross { color: #DC2626; font-weight: 700; }
+  .warn { color: #F59E0B; font-weight: 700; }
+
+  /* === Lang toggle === */
+  .lang-btn {
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+  }
+  .lang-btn.active { background: var(--brand); color: white; }
+
+  /* === Segment pills === */
+  .seg-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .seg-champions { background: #D1FAE5; color: #065F46; }
+  .seg-loyal { background: #DBEAFE; color: #1E3A8A; }
+  .seg-atrisk { background: #FEF3C7; color: #92400E; }
+  .seg-lost { background: #FEE2E2; color: #991B1B; }
+  .seg-new { background: #EDE9FE; color: #5B21B6; }
+
+  /* === Sticky header === */
+  .sticky-header { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255,255,255,.85); border-bottom: 1px solid rgba(226,232,240,.6); }
+
+  /* === Inputs === */
+  input, select, textarea {
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 3px rgba(16,185,129,.12) !important;
+  }
+
+  /* Decorative blob */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: .35;
+    pointer-events: none;
+  }
+
+  .demo-chart-wrap { position: relative; height: 240px; }
+
+  /* === Hide / show feature panels === */
+  .feature-panel { display: none; animation: fadeIn .35s ease-out; }
+  .feature-panel.active { display: grid; }
+
+  /* === Marquee for logos === */
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .marquee-track { display: flex; gap: 60px; animation: marquee 30s linear infinite; }
+
+  @media (max-width: 768px) {
+    .pricing-card.featured { transform: none; }
+    .mock-row { grid-template-columns: 1.5fr 0.7fr 0.6fr; }
+    .mock-row > :nth-child(n+4) { display: none; }
+  }
+
+  /* === Live notifications === */
+  .notif-stack {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+    max-width: 340px;
+  }
+  .notif {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 24px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    pointer-events: auto;
+    transform: translateX(-120%);
+    opacity: 0;
+    transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+  }
+  .notif.show { transform: translateX(0); opacity: 1; }
+  .notif-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    background: linear-gradient(135deg, #10B981, #047857);
+  }
+  .notif-body { flex: 1; min-width: 0; font-size: 13px; line-height: 1.45; }
+  .notif-title { font-weight: 600; color: var(--ink); }
+  .notif-text { color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .notif-time { font-size: 10px; color: #94A3B8; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+  .notif-close {
+    color: #CBD5E1; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px;
+  }
+  .notif-close:hover { color: #64748B; }
+  @media (max-width: 640px) {
+    .notif-stack { bottom: 12px; left: 12px; right: 12px; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== HEADER ============== -->
+<header class="sticky-header sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-sm" style="background: linear-gradient(135deg, #10B981, #047857);">W</div>
+      <div>
+        <div class="font-bold text-lg leading-tight">W CRM</div>
+        <div class="text-[10px] text-slate-500 leading-tight -mt-0.5" data-i18n="brand_tag">Analityka dla Baselinker</div>
+      </div>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm text-slate-600">
+      <a href="#features" class="hover:text-slate-900" data-i18n="nav_features">Funkcje</a>
+      <a href="#proof" class="hover:text-slate-900" data-i18n="nav_proof">Klienci</a>
+      <a href="#compare" class="hover:text-slate-900" data-i18n="nav_compare">Porównanie</a>
+      <a href="#pricing" class="hover:text-slate-900" data-i18n="nav_pricing">Cennik</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <div class="flex bg-slate-100 rounded-lg p-0.5">
+        <button class="lang-btn active" onclick="setLang('pl')" id="lang-pl">PL</button>
+        <button class="lang-btn" onclick="setLang('en')" id="lang-en">EN</button>
+      </div>
+      <a href="#lead" class="btn-primary text-sm" data-i18n="cta_top">Zamów demo →</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============== HERO ============== -->
+<section class="hero-bg pt-16 pb-24 md:pt-24 md:pb-32 relative">
+  <div class="grid-bg"></div>
+  <div class="blob" style="background: #10B981; width: 320px; height: 320px; top: 10%; left: -100px;"></div>
+  <div class="blob" style="background: #34D399; width: 280px; height: 280px; bottom: 0; right: -80px; opacity: .2;"></div>
+  <div class="max-w-7xl mx-auto px-6 relative">
+    <div class="grid md:grid-cols-2 gap-14 items-center">
+      <div class="reveal">
+        <div class="badge b-green mb-5">
+          <span class="live-dot"></span>
+          <span data-i18n="hero_badge">Native Baselinker · Polski produkt · GDPR-ready</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-extrabold leading-[1.05] mb-6 tracking-tight">
+          <span data-i18n="hero_t1">Klaviyo dla</span>
+          <span class="grad-text">Baselinker.</span><br>
+          <span data-i18n="hero_t2" class="text-slate-700">Bez Klaviyo cen.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-600 mb-9 leading-relaxed max-w-xl" data-i18n="hero_sub">
+          W CRM łączy Twoich klientów z Allegro, Amazon i sklepu w jeden profil, liczy LTV, RFM, retencję i prognozuje churn. Wszystko natywnie na Baselinkerze — 2–4× taniej niż konkurencja.
+        </p>
+        <div class="flex flex-wrap gap-3 mb-12">
+          <a href="#lead" class="btn-primary" data-i18n="hero_cta1">Zamów demo na żywo</a>
+          <a href="#proof" class="btn-secondary" data-i18n="hero_cta2">Zobacz u realnego klienta</a>
+        </div>
+        <div class="grid grid-cols-3 gap-6 max-w-md">
+          <div>
+            <div class="text-3xl font-extrabold grad-text" data-counter="79" data-prefix="€">€79</div>
+            <div class="text-xs text-slate-500 mt-1" data-i18n="hero_s1">Growth / mies.</div>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold grad-text" data-counter="2" data-suffix="–4×">2–4×</div>
+            <div class="text-xs text-slate-500 mt-1" data-i18n="hero_s2">taniej niż Klaviyo</div>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold grad-text" data-counter="10" data-suffix=" min">10 min</div>
+            <div class="text-xs text-slate-500 mt-1" data-i18n="hero_s3">do dashboardu</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERO MOCK: real product UI (Renew CRM pilot) -->
+      <div class="reveal floating">
+        <div class="app-mock">
+          <!-- Window chrome -->
+          <div class="app-bar">
+            <div class="flex gap-1.5">
+              <div class="app-dot" style="background:#EF4444"></div>
+              <div class="app-dot" style="background:#F59E0B"></div>
+              <div class="app-dot" style="background:#10B981"></div>
+            </div>
+            <div class="flex-1 text-center text-xs text-slate-400 font-mono">renew-pilot.wcrm.app/clients/20807</div>
+          </div>
+          <!-- App nav -->
+          <div class="flex items-center gap-3 px-4 py-2 border-b border-slate-100 text-xs">
+            <span class="font-bold">Renew CRM</span>
+            <span class="app-tab">Calendar</span>
+            <span class="app-tab">Offers</span>
+            <span class="app-tab">Orders</span>
+            <span class="app-tab active">Management</span>
+            <span class="app-tab">Zadarma</span>
+          </div>
+          <!-- Client header -->
+          <div class="p-5 border-b border-slate-100">
+            <div class="text-xs text-slate-400 mb-1">Management › Clients › View</div>
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-xl font-bold">Mariia Onishko</div>
+                <div class="text-xs text-slate-500 mt-0.5">mari.kotyash92@gmail.com · Warszawa, PL · <span class="badge b-orange" style="padding:1px 8px; font-size:10px;">B2B</span></div>
+              </div>
+              <span class="badge b-green">Champion · LTV €428</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mt-4">
+              <div class="bg-emerald-50 rounded-lg p-3">
+                <div class="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">Total Spent</div>
+                <div class="font-bold text-xl text-emerald-900 mt-0.5"><span data-counter="32065" data-suffix=" PLN" data-decimals="0">32,065 PLN</span></div>
+                <svg viewBox="0 0 100 20" class="w-full h-4 mt-1"><polyline points="0,15 12,12 24,14 36,8 48,10 60,5 72,7 84,3 100,4" fill="none" stroke="#10B981" stroke-width="1.5"/></svg>
+              </div>
+              <div class="bg-emerald-50 rounded-lg p-3">
+                <div class="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">Total Orders</div>
+                <div class="font-bold text-xl text-emerald-900 mt-0.5"><span data-counter="40">40</span></div>
+                <svg viewBox="0 0 100 20" class="w-full h-4 mt-1"><polyline points="0,16 12,14 24,15 36,10 48,12 60,7 72,8 84,5 100,6" fill="none" stroke="#10B981" stroke-width="1.5"/></svg>
+              </div>
+              <div class="bg-emerald-50 rounded-lg p-3">
+                <div class="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">Avg. Order</div>
+                <div class="font-bold text-xl text-emerald-900 mt-0.5">801 PLN</div>
+                <svg viewBox="0 0 100 20" class="w-full h-4 mt-1"><polyline points="0,12 12,13 24,10 36,11 48,9 60,10 72,8 84,9 100,7" fill="none" stroke="#0EA5E9" stroke-width="1.5"/></svg>
+              </div>
+            </div>
+          </div>
+          <!-- Footnote -->
+          <div class="px-5 py-3 bg-slate-50 text-xs text-slate-500 flex items-center gap-2">
+            <span class="live-dot"></span>
+            <span data-i18n="hero_mock_note">Pilot: Renew CRM · 5 960 zamówień zsync z BaseLinker</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== LOGO STRIP ============== -->
+<section class="py-10 border-y border-slate-100">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center text-xs uppercase tracking-widest text-slate-400 mb-5" data-i18n="logos_h">Działa z ekosystemem, którego już używasz</div>
+    <div class="overflow-hidden">
+      <div class="marquee-track">
+        <div class="flex items-center gap-12 text-slate-400 font-bold text-lg whitespace-nowrap">
+          <span>Baselinker</span><span>·</span><span>Allegro</span><span>·</span><span>Amazon EU</span><span>·</span><span>WooCommerce</span><span>·</span><span>Shoper</span><span>·</span><span>IdoSell</span><span>·</span><span>PrestaShop</span><span>·</span><span>Zadarma</span><span>·</span><span>SerwerSMS</span><span>·</span><span>Mailgun</span>
+        </div>
+        <div class="flex items-center gap-12 text-slate-400 font-bold text-lg whitespace-nowrap">
+          <span>Baselinker</span><span>·</span><span>Allegro</span><span>·</span><span>Amazon EU</span><span>·</span><span>WooCommerce</span><span>·</span><span>Shoper</span><span>·</span><span>IdoSell</span><span>·</span><span>PrestaShop</span><span>·</span><span>Zadarma</span><span>·</span><span>SerwerSMS</span><span>·</span><span>Mailgun</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== PROBLEM ============== -->
+<section class="py-24 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center max-w-3xl mx-auto mb-14 reveal">
+      <span class="badge b-red mb-4">Problem</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" data-i18n="prob_t">Baselinker zarządza zamówieniami. Nie klientami.</h2>
+      <p class="text-lg text-slate-600" data-i18n="prob_s">Każde zamówienie traktowane jest osobno. Ten sam klient z 8 zakupami na Allegro i Amazon? Dla BL to 8 osób. Tracisz LTV, segmentację i każdą szansę na powrót.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 reveal-stagger reveal">
+      <div class="card card-hover p-7">
+        <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2" data-i18n="p1_t">Nie wiesz, kto jest VIP</h3>
+        <p class="text-slate-600 text-sm leading-relaxed" data-i18n="p1_d">Brak Single Customer View. Ten sam klient = N profili. Nie odróżnisz dropshippera od stałego klienta.</p>
+      </div>
+      <div class="card card-hover p-7">
+        <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2" data-i18n="p2_t">Nie znasz LTV ani churn</h3>
+        <p class="text-slate-600 text-sm leading-relaxed" data-i18n="p2_d">Ile naprawdę kosztuje pozyskanie klienta? Kiedy odejdzie? BL pokazuje sprzedaż, nie pokazuje retencji.</p>
+      </div>
+      <div class="card card-hover p-7">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2" data-i18n="p3_t">Klaviyo? Drogo i bez BL</h3>
+        <p class="text-slate-600 text-sm leading-relaxed" data-i18n="p3_d">Klaviyo $130+/mies. i brak integracji z Baselinkerem. SALESmanago — €500+. Edrone — bez marketplace'ów.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SOLUTION FEATURES ============== -->
+<section id="features" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center max-w-3xl mx-auto mb-14 reveal">
+      <span class="badge b-green mb-4">Rozwiązanie</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight">5 <span class="grad-text" data-i18n="feat_h_hl">funkcji</span>, <span data-i18n="feat_h">które zmieniają zasady gry</span></h2>
+      <p class="text-lg text-slate-600" data-i18n="feat_s">Wszystko zbudowane natywnie na danych Baselinkera. Bez integratorów, bez Zapier, bez opóźnień synca.</p>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2 mb-10 reveal">
+      <button class="demo-tab active" onclick="showFeature(1)" data-i18n="ft1">① Single Customer View</button>
+      <button class="demo-tab" onclick="showFeature(2)" data-i18n="ft2">② LTV & RFM</button>
+      <button class="demo-tab" onclick="showFeature(3)" data-i18n="ft3">③ Zwroty</button>
+      <button class="demo-tab" onclick="showFeature(4)" data-i18n="ft4">④ Email / SMS</button>
+      <button class="demo-tab" onclick="showFeature(5)" data-i18n="ft5">⑤ Predykcja</button>
+    </div>
+
+    <!-- Feature 1 -->
+    <div id="feature-1" class="feature-panel active md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="badge b-red mb-3">P0 · 🥇</span>
+        <h3 class="text-3xl font-bold mb-4" data-i18n="f1_t">Single Customer View z deduplikacją</h3>
+        <p class="text-slate-600 mb-6 leading-relaxed" data-i18n="f1_d">Łączymy zamówienia z wszystkich kanałów (Allegro, Amazon, Twój sklep) w jeden profil klienta. Heurystyki: email → telefon (E.164) → imię+adres. UI łączenia z podglądem i rollbackiem.</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f1_b1">Automatyczne dopasowanie cross-channel</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f1_b2">Rozpoznawanie NIP (B2B vs B2C)</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f1_b3">Historia kontaktów, telefonów, adresów</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f1_b4">Bezpieczne łączenie z rollbackiem</span></li>
+        </ul>
+      </div>
+      <div class="app-mock">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div class="font-semibold text-sm">Anna Kowalska</div>
+          <span class="badge b-green">Champion</span>
+        </div>
+        <div class="p-5">
+          <div class="text-xs text-slate-400 mb-3">anna.kowalska@example.pl · +48 600 123 456 · NIP 5252...</div>
+          <div class="grid grid-cols-3 gap-2 mb-4">
+            <div class="bg-emerald-50 rounded-lg p-2.5 text-center"><div class="text-[10px] text-emerald-700 uppercase">Orders</div><div class="font-bold text-lg">14</div></div>
+            <div class="bg-emerald-50 rounded-lg p-2.5 text-center"><div class="text-[10px] text-emerald-700 uppercase">LTV</div><div class="font-bold text-lg">€842</div></div>
+            <div class="bg-emerald-50 rounded-lg p-2.5 text-center"><div class="text-[10px] text-emerald-700 uppercase">AOV</div><div class="font-bold text-lg">€60</div></div>
+          </div>
+          <div class="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide" data-i18n="f1_chs">Połączone kanały</div>
+          <div class="space-y-2 mb-4">
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded"><span class="text-sm">🛒 Allegro</span><span class="text-sm font-mono">9 orders</span></div>
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded"><span class="text-sm">📦 Amazon DE</span><span class="text-sm font-mono">3 orders</span></div>
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded"><span class="text-sm">🏪 Mój sklep</span><span class="text-sm font-mono">2 orders</span></div>
+          </div>
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg>
+            <span data-i18n="f1_merge">Połączono 3 duplikaty z 14 zamówień</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 2 -->
+    <div id="feature-2" class="feature-panel md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="badge b-red mb-3">P0 · 🥈</span>
+        <h3 class="text-3xl font-bold mb-4" data-i18n="f2_t">LTV, RFM, kohorty retencji</h3>
+        <p class="text-slate-600 mb-6 leading-relaxed" data-i18n="f2_d">Główny dashboard: LTV po segmencie i kanale, średni koszyk, częstotliwość, krzywe retencji wg miesiąca pierwszego zakupu. Gotowe segmenty RFM aktualizowane automatycznie.</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f2_b1">Segmenty: Champions / Loyal / At Risk / Lost / New</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f2_b2">Drill-down do pojedynczego klienta</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f2_b3">Eksport segmentu CSV / Excel</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f2_b4">Porównanie MoM, YoY</span></li>
+        </ul>
+      </div>
+      <div class="app-mock p-5">
+        <div class="flex justify-between mb-3">
+          <div>
+            <div class="text-xs text-slate-400" data-i18n="f2_ml">Krzywa retencji kohort</div>
+            <div class="font-bold" data-i18n="f2_mt">Klienci wg miesiąca pierwszego zakupu</div>
+          </div>
+          <span class="badge b-green">Auto-refresh</span>
+        </div>
+        <div class="demo-chart-wrap"><canvas id="cohortChart"></canvas></div>
+        <div class="grid grid-cols-5 gap-2 mt-4 text-center text-xs">
+          <div><span class="seg-pill seg-champions">187</span><div class="text-slate-500 mt-1">Champions</div></div>
+          <div><span class="seg-pill seg-loyal">412</span><div class="text-slate-500 mt-1">Loyal</div></div>
+          <div><span class="seg-pill seg-atrisk">298</span><div class="text-slate-500 mt-1">At Risk</div></div>
+          <div><span class="seg-pill seg-lost">523</span><div class="text-slate-500 mt-1">Lost</div></div>
+          <div><span class="seg-pill seg-new">144</span><div class="text-slate-500 mt-1">New</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 3 -->
+    <div id="feature-3" class="feature-panel md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="badge b-orange mb-3">P1 · 🥉</span>
+        <h3 class="text-3xl font-bold mb-4" data-i18n="f3_t">Analityka zwrotów i reklamacji</h3>
+        <p class="text-slate-600 mb-6 leading-relaxed" data-i18n="f3_d">Średnia stopa zwrotów w e-com — 18,1%, w fashion sięga 30%. Tego nikt natywnie nie liczy na BL. My liczymy: po SKU, kategorii, kliencie, kanale.</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f3_b1">Return rate wg SKU / kategorii / klienta / kanału</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f3_b2">Alerty anomalii ("Allegro return rate ↑22%")</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f3_b3">Lista "częstych zwracaczy" — wyklucz z promocji</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 011.4 1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f3_b4">Wpływ na marżę i prognoza</span></li>
+        </ul>
+      </div>
+      <div class="app-mock p-5">
+        <div class="text-xs text-slate-400 mb-3" data-i18n="f3_ml">Return rate wg kanału · ostatnie 30 dni</div>
+        <div class="demo-chart-wrap"><canvas id="returnsChart"></canvas></div>
+        <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm flex items-start gap-2">
+          <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          <div><strong data-i18n="f3_alert_t">Wykryto anomalię:</strong> <span data-i18n="f3_alert_d">kategoria "Sukienki letnie" — return rate wzrósł z 14% do 31% w 7 dni.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 4 -->
+    <div id="feature-4" class="feature-panel md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="badge b-orange mb-3">P1</span>
+        <h3 class="text-3xl font-bold mb-4" data-i18n="f4_t">Wyzwalane email i SMS</h3>
+        <p class="text-slate-600 mb-6 leading-relaxed" data-i18n="f4_d">Monetyzacja analityki przez akcję. Win-back po 60/90 dniach, cross-sell po kategorii, post-purchase NPS — wszystko wyzwalane z segmentów RFM. SMS przez SerwerSMS / SMSAPI.</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f4_b1">Szablony PL + EN + RU + UA</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f4_b2">Triggery: RFM, zwroty, abandoned cart</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f4_b3">A/B testy w jednym kliknięciu</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f4_b4">Email przez Mailgun/Resend, SMS lokalnie</span></li>
+        </ul>
+      </div>
+      <div class="app-mock p-5">
+        <div class="text-xs text-slate-400 mb-3" data-i18n="f4_ml">Aktywne kampanie</div>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg hover:bg-emerald-50 transition">
+            <div>
+              <div class="font-semibold text-sm" data-i18n="f4_c1">Win-back 60 dni</div>
+              <div class="text-xs text-slate-500">At Risk · email + SMS</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase text-slate-400">CTR</div>
+              <div class="font-bold text-emerald-600">23,8%</div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg hover:bg-emerald-50 transition">
+            <div>
+              <div class="font-semibold text-sm" data-i18n="f4_c2">Cross-sell: kosmetyki</div>
+              <div class="text-xs text-slate-500">Loyal · email</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase text-slate-400">CTR</div>
+              <div class="font-bold text-emerald-600">18,2%</div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg hover:bg-emerald-50 transition">
+            <div>
+              <div class="font-semibold text-sm" data-i18n="f4_c3">Post-purchase NPS</div>
+              <div class="text-xs text-slate-500">D+7 · email</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase text-slate-400">NPS</div>
+              <div class="font-bold text-emerald-600">+54</div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-lg">
+            <div>
+              <div class="font-semibold text-sm flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                <span data-i18n="f4_c4">Auto-call (Zadarma)</span>
+              </div>
+              <div class="text-xs text-slate-500" data-i18n="f4_c4d">VIP win-back · ostatnia szansa</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] uppercase text-slate-400">CR</div>
+              <div class="font-bold text-emerald-600">31%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 5 -->
+    <div id="feature-5" class="feature-panel md:grid-cols-2 gap-12 items-center">
+      <div>
+        <span class="badge b-green mb-3">P2 · Premium</span>
+        <h3 class="text-3xl font-bold mb-4" data-i18n="f5_t">Predykcja: następny zakup i churn</h3>
+        <p class="text-slate-600 mb-6 leading-relaxed" data-i18n="f5_d">Model ML na historycznych zamówieniach. Dla każdego klienta — data prawdopodobnego następnego zakupu i ryzyko odejścia (0-100%). Premium-fica w planie Scale.</p>
+        <ul class="space-y-3">
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f5_b1">Prognoza daty następnego zakupu</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f5_b2">Churn risk score (0-100)</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f5_b3">Auto-trigger gdy ryzyko > 70%</span></li>
+          <li class="flex items-start gap-3"><svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"/></svg><span data-i18n="f5_b4">Integracja z kampaniami win-back</span></li>
+        </ul>
+      </div>
+      <div class="app-mock p-5">
+        <div class="text-xs text-slate-400 mb-3" data-i18n="f5_ml">Top klienci · ryzyko churn (najbliższe 30 dni)</div>
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Magdalena W.</div>
+              <div class="text-xs text-slate-500">LTV €1,240 · last 89 days ago</div>
+            </div>
+            <div class="text-right"><div class="font-bold text-red-600">87%</div><div class="text-[10px] text-slate-500">churn risk</div></div>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Piotr K.</div>
+              <div class="text-xs text-slate-500">LTV €890 · last 67 days ago</div>
+            </div>
+            <div class="text-right"><div class="font-bold text-orange-600">71%</div><div class="text-[10px] text-slate-500">churn risk</div></div>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Karolina M.</div>
+              <div class="text-xs text-slate-500">LTV €620 · last 54 days ago</div>
+            </div>
+            <div class="text-right"><div class="font-bold text-yellow-600">58%</div><div class="text-[10px] text-slate-500">churn risk</div></div>
+          </div>
+        </div>
+        <div class="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2">
+          <span class="text-base">💡</span>
+          <span data-i18n="f5_tip">Auto-trigger: 23 klientów otrzyma kampanię win-back jutro o 10:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== SOCIAL PROOF / RENEW CRM PILOT ============== -->
+<section id="proof" class="py-24 bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+      <span class="badge b-green mb-4">Case study · Pilot</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" data-i18n="proof_t">W CRM w akcji u <span class="grad-text">Renew CRM</span></h2>
+      <p class="text-lg text-slate-600" data-i18n="proof_s">Polski sprzedawca produktów do pielęgnacji — 5 960 zamówień zsync z BaseLinker, B2B + B2C, 5 języków (PL/EN/RU/UA). Real-time deduplikacja, analityka i triggery — wszystko na żywych danych.</p>
+    </div>
+
+    <!-- Big screenshot mock: Orders list -->
+    <div class="app-mock reveal mb-10">
+      <!-- Browser bar -->
+      <div class="app-bar">
+        <div class="flex gap-1.5">
+          <div class="app-dot" style="background:#EF4444"></div>
+          <div class="app-dot" style="background:#F59E0B"></div>
+          <div class="app-dot" style="background:#10B981"></div>
+        </div>
+        <div class="flex-1 text-xs text-slate-400 font-mono">renew-pilot.wcrm.app/orders</div>
+      </div>
+      <!-- App nav -->
+      <div class="flex items-center gap-3 px-5 py-2.5 border-b border-slate-100 text-xs">
+        <span class="font-bold">Renew CRM</span>
+        <span class="app-tab">Calendar</span>
+        <span class="app-tab">Offers</span>
+        <span class="app-tab active">Orders</span>
+        <span class="app-tab">Boards</span>
+        <span class="app-tab">Reminders</span>
+        <span class="app-tab">Management</span>
+        <span class="app-tab">Zadarma</span>
+      </div>
+      <!-- Page heading -->
+      <div class="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+        <div>
+          <div class="text-xs text-slate-400">Orders › List</div>
+          <div class="text-lg font-bold">Orders <span class="text-slate-400 text-sm font-normal">— 5 960 results</span></div>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+            Fetch from BaseLinker
+          </button>
+          <button class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600">Import CSV</button>
+          <button class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold">+ New Order</button>
+        </div>
+      </div>
+      <!-- Table -->
+      <div class="mock-row head">
+        <div>Client</div><div>Ext. ID</div><div>Source</div><div>Status</div><div>Price</div><div>Date</div>
+      </div>
+      <div class="mock-row"><div>Włosy · Paznokcie · Masaże</div><div class="text-slate-500">328964285</div><div><span class="badge b-blue">BaseLinker</span></div><div><span class="badge b-blue">New · Office</span></div><div class="font-semibold">2,172.00 zł</div><div class="text-slate-500">18 May</div></div>
+      <div class="mock-row"><div>Nataliia Shvalia</div><div class="text-slate-500">328961799</div><div><span class="badge b-blue">BaseLinker</span></div><div><span class="badge b-blue">New · Office</span></div><div class="font-semibold">455.00 zł</div><div class="text-slate-500">18 May</div></div>
+      <div class="mock-row"><div>Natalia Tretiakova</div><div class="text-slate-500">328957425</div><div><span class="badge b-blue">BaseLinker</span></div><div><span class="badge b-orange">Pickup</span></div><div class="font-semibold">805.00 zł</div><div class="text-slate-500">18 May</div></div>
+      <div class="mock-row"><div>Veranika Bizuk</div><div class="text-slate-500">328952931</div><div><span class="badge b-blue">BaseLinker</span></div><div><span class="badge b-orange">To Ship</span></div><div class="font-semibold">2,116.00 zł</div><div class="text-slate-500">18 May</div></div>
+      <div class="mock-row"><div>Alla Mukhina</div><div class="text-slate-500">328938601</div><div><span class="badge b-blue">BaseLinker</span></div><div><span class="badge b-green">Shipped</span></div><div class="font-semibold">2,107.00 zł</div><div class="text-slate-500">18 May</div></div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="grid md:grid-cols-4 gap-5 reveal reveal-stagger">
+      <div class="card p-6 text-center">
+        <div class="text-3xl font-extrabold grad-text" data-counter="5960" data-suffix="">5,960</div>
+        <div class="text-sm text-slate-500 mt-1" data-i18n="kpi1">zamówień z BaseLinker</div>
+      </div>
+      <div class="card p-6 text-center">
+        <div class="text-3xl font-extrabold grad-text" data-counter="2847" data-suffix="">2,847</div>
+        <div class="text-sm text-slate-500 mt-1" data-i18n="kpi2">unikalnych klientów (po dedup)</div>
+      </div>
+      <div class="card p-6 text-center">
+        <div class="text-3xl font-extrabold grad-text" data-counter="34" data-suffix="%">34%</div>
+        <div class="text-sm text-slate-500 mt-1" data-i18n="kpi3">retention 90 dni</div>
+      </div>
+      <div class="card p-6 text-center">
+        <div class="text-3xl font-extrabold grad-text">10 <span class="text-xl">min</span></div>
+        <div class="text-sm text-slate-500 mt-1" data-i18n="kpi4">do pierwszego dashboardu</div>
+      </div>
+    </div>
+
+    <!-- Testimonial -->
+    <div class="mt-12 max-w-3xl mx-auto reveal">
+      <div class="card p-8 md:p-10 relative">
+        <svg class="absolute top-6 left-6 w-10 h-10 text-emerald-200" fill="currentColor" viewBox="0 0 32 32"><path d="M9.4 5C5.4 6.7 2 11.3 2 16.8c0 4.7 3 7.7 6.8 7.7 3.6 0 5.9-2.5 5.9-5.6 0-3-2-5.2-4.6-5.5-.5 0-1.2 0-1.5.2-.4-3.3 2.6-7.2 5.7-9L9.4 5zm15.3 0c-4 1.7-7.4 6.3-7.4 11.8 0 4.7 3 7.7 6.8 7.7 3.6 0 5.9-2.5 5.9-5.6 0-3-2-5.2-4.6-5.5-.5 0-1.2 0-1.5.2-.4-3.3 2.6-7.2 5.7-9L24.7 5z"/></svg>
+        <div class="pl-12">
+          <p class="text-lg md:text-xl text-slate-700 leading-relaxed mb-5" data-i18n="quote">"Przed W CRM — Excel i ręczne łączenie klientów. Teraz widzę kto z 6 000 zamówień to mój VIP, kto za chwilę odejdzie i co kupić w kampanii win-back. Setup zajął popołudnie."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-white font-bold">AK</div>
+            <div>
+              <div class="font-bold">Alex Kovalenko</div>
+              <div class="text-xs text-slate-500" data-i18n="quote_role">Owner · Renew CRM · Warszawa</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== COMPARE ============== -->
+<section id="compare" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+      <span class="badge b-slate mb-4">Porównanie</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" data-i18n="cmp_t">W CRM vs. konkurencja</h2>
+      <p class="text-lg text-slate-600" data-i18n="cmp_s">Niezależny przegląd rynku — dlaczego nikt inny nie robi tego, co my.</p>
+    </div>
+    <div class="card overflow-x-auto reveal">
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th data-i18n="cmp_th">Funkcja</th>
+            <th><strong class="text-emerald-700">W CRM</strong></th>
+            <th>Klaviyo</th>
+            <th>SALESmanago</th>
+            <th>edrone</th>
+            <th>Firmao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td data-i18n="cmp_r1">Natywna integracja Baselinker</td><td class="check">✓</td><td class="cross">✕</td><td class="check">✓</td><td class="cross">✕</td><td class="check">✓</td></tr>
+          <tr><td data-i18n="cmp_r2">Single Customer View cross-channel</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="warn">⚠</td><td class="cross">✕</td></tr>
+          <tr><td data-i18n="cmp_r3">LTV / RFM / kohorty</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="warn">⚠</td><td class="cross">✕</td></tr>
+          <tr><td data-i18n="cmp_r4">Analityka zwrotów (SKU/kanał)</td><td class="check">✓</td><td class="cross">✕</td><td class="warn">⚠</td><td class="cross">✕</td><td class="cross">✕</td></tr>
+          <tr><td data-i18n="cmp_r5">Predykcja churn / repurchase</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="cross">✕</td><td class="cross">✕</td></tr>
+          <tr><td data-i18n="cmp_r6">Polski produkt + GDPR-ready</td><td class="check">✓</td><td class="cross">✕</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+          <tr><td data-i18n="cmp_r7">Cena startowa</td><td><strong class="text-emerald-700">€29/mies</strong></td><td>$130+/mies</td><td>€500+/mies</td><td>~€50/mies</td><td>$19/user</td></tr>
+          <tr><td data-i18n="cmp_r8">Setup</td><td><strong class="text-emerald-700">10 min</strong></td><td>days</td><td>weeks</td><td>days</td><td>days</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============== PRICING ============== -->
+<section id="pricing" class="py-24 bg-slate-50">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center max-w-3xl mx-auto mb-12 reveal">
+      <span class="badge b-green mb-4">Cennik</span>
+      <h2 class="text-4xl md:text-5xl font-bold mb-5 tracking-tight" data-i18n="prc_t">Płać za <span class="grad-text">skalę</span>, nie za miejsca</h2>
+      <p class="text-lg text-slate-600" data-i18n="prc_s">Freemium + per-order tiers. Jak Baselinker — tylko z analityką.</p>
+    </div>
+    <div class="grid md:grid-cols-4 gap-5 reveal">
+      <div class="pricing-card">
+        <div class="font-bold text-lg mb-1">Free</div>
+        <div class="text-3xl font-extrabold mb-1">€0</div>
+        <div class="text-sm text-slate-500 mb-5 price-sub" data-i18n="prc_f">do 200 zam/mies</div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_f1">Podstawowa analityka</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_f2">Deduplikacja klientów</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_f3">1 użytkownik</span></li>
+        </ul>
+      </div>
+      <div class="pricing-card">
+        <div class="font-bold text-lg mb-1">Starter</div>
+        <div class="text-3xl font-extrabold mb-1">€29<span class="text-base font-medium text-slate-400">/mies</span></div>
+        <div class="text-sm text-slate-500 mb-5 price-sub" data-i18n="prc_st">do 1 000 zam/mies</div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_st1">RFM + kohorty</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_st2">Eksporty CSV/XLS</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_st3">Email 1k/mies</span></li>
+        </ul>
+      </div>
+      <div class="pricing-card featured">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2"><span class="badge b-green" style="background:white;color:#065F46;">⭐ <span data-i18n="prc_pop">Najpopularniejszy</span></span></div>
+        <div class="font-bold text-lg mb-1">Growth</div>
+        <div class="text-3xl font-extrabold mb-1">€79<span class="text-base font-medium opacity-70">/mies</span></div>
+        <div class="text-sm mb-5 price-sub" data-i18n="prc_g">do 5 000 zam/mies</div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2 items-start"><span style="color:#34D399;">✓</span> <span data-i18n="prc_g1">Predictive LTV + churn</span></li>
+          <li class="flex gap-2 items-start"><span style="color:#34D399;">✓</span> <span data-i18n="prc_g2">Analityka zwrotów</span></li>
+          <li class="flex gap-2 items-start"><span style="color:#34D399;">✓</span> <span data-i18n="prc_g3">Email/SMS 10k/mies</span></li>
+          <li class="flex gap-2 items-start"><span style="color:#34D399;">✓</span> <span data-i18n="prc_g4">3 użytkowników</span></li>
+        </ul>
+      </div>
+      <div class="pricing-card">
+        <div class="font-bold text-lg mb-1">Scale</div>
+        <div class="text-3xl font-extrabold mb-1">€199<span class="text-base font-medium text-slate-400">/mies</span></div>
+        <div class="text-sm text-slate-500 mb-5 price-sub" data-i18n="prc_sc">do 20 000 zam/mies</div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_sc1">B2B segmentacja</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_sc2">Prognoza popytu</span></li>
+          <li class="flex gap-2 items-start"><span class="check">✓</span> <span data-i18n="prc_sc3">API + 10 użytkowników</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="text-center text-sm text-slate-500 mt-8" data-i18n="prc_ent">Enterprise (20 000+ zam/mies, SLA, dedicated CSM) — od €499/mies.</p>
+  </div>
+</section>
+
+<!-- ============== LEAD ============== -->
+<section id="lead" class="py-24 relative overflow-hidden">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,#022C22 0%,#064E3B 50%,#065F46 100%);"></div>
+  <div class="blob" style="background:#10B981;width:400px;height:400px;top:-100px;right:-100px;opacity:.25;"></div>
+  <div class="blob" style="background:#34D399;width:300px;height:300px;bottom:-50px;left:-50px;opacity:.2;"></div>
+  <div class="max-w-3xl mx-auto px-6 text-center text-white relative reveal">
+    <span class="badge" style="background:rgba(255,255,255,.15);color:white;backdrop-filter:blur(8px);">Demo na żywo</span>
+    <h2 class="text-4xl md:text-5xl font-bold mt-5 mb-4 tracking-tight" data-i18n="lead_t">Zobacz W CRM na Twoich danych Baselinker</h2>
+    <p class="text-lg opacity-90 mb-9 max-w-xl mx-auto" data-i18n="lead_s">Zostaw kontakt — w 24h pokażemy Ci dashboard z Twoimi prawdziwymi zamówieniami. Free trial 14 dni, bez karty.</p>
+    <form id="leadForm" class="max-w-md mx-auto bg-white rounded-2xl p-7 text-left text-slate-900 shadow-2xl space-y-4" onsubmit="submitLead(event)">
+      <div>
+        <label class="block text-sm font-semibold mb-1.5" data-i18n="lf_name">Imię i nazwisko</label>
+        <input name="name" required class="w-full px-4 py-3 border border-slate-200 rounded-lg" placeholder="Jan Kowalski">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1.5">Email</label>
+        <input type="email" name="email" required class="w-full px-4 py-3 border border-slate-200 rounded-lg" placeholder="jan@firma.pl">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1.5" data-i18n="lf_co">Firma (sklep)</label>
+        <input name="company" class="w-full px-4 py-3 border border-slate-200 rounded-lg" placeholder="MyShop.pl">
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1.5" data-i18n="lf_vol">Zamówień / miesiąc</label>
+        <select name="volume" class="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white">
+          <option>&lt; 100</option>
+          <option>100 – 1 000</option>
+          <option>1 000 – 5 000</option>
+          <option>5 000 – 20 000</option>
+          <option>20 000+</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1.5" data-i18n="lf_msg">Wiadomość (opcjonalne)</label>
+        <textarea name="message" rows="2" class="w-full px-4 py-3 border border-slate-200 rounded-lg" placeholder="Co Cię interesuje?"></textarea>
+      </div>
+      <input type="hidden" name="source" value="landing-base-conf-2026">
+      <button type="submit" class="w-full btn-primary justify-center text-base" data-i18n="lf_btn">Umów demo — to nic nie kosztuje →</button>
+      <div id="leadStatus" class="text-sm text-center min-h-[1.25rem]"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============== FOOTER ============== -->
+<footer class="bg-slate-900 text-slate-400 py-14">
+  <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-8">
+    <div>
+      <div class="flex items-center gap-2.5 mb-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white" style="background: linear-gradient(135deg, #10B981, #047857);">W</div>
+        <span class="font-bold text-xl text-white">W CRM</span>
+      </div>
+      <p class="text-sm" data-i18n="ft_tag">Klaviyo dla Baselinker. Analityczne CRM dla polskich sprzedawców e-commerce.</p>
+    </div>
+    <div>
+      <div class="font-semibold text-white mb-3" data-i18n="ft_p">Produkt</div>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#features" class="hover:text-white" data-i18n="ft_f">Funkcje</a></li>
+        <li><a href="#pricing" class="hover:text-white" data-i18n="ft_pr">Cennik</a></li>
+        <li><a href="#compare" class="hover:text-white" data-i18n="ft_c">Porównanie</a></li>
+        <li><a href="#proof" class="hover:text-white" data-i18n="ft_cs">Case study</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-semibold text-white mb-3" data-i18n="ft_k">Kontakt</div>
+      <p class="text-sm" data-i18n="ft_kp">Konferencja Base 2026 · Warszawa, PL<br>biuro@renew-polska.pl</p>
+    </div>
+  </div>
+  <div class="text-center text-xs mt-12 text-slate-500">© 2026 W CRM · <span data-i18n="ft_r">Wszystkie prawa zastrzeżone</span></div>
+</footer>
+
+<!-- ============== LIVE NOTIFICATIONS ============== -->
+<div class="notif-stack" id="notifStack" aria-live="polite"></div>
+
+<!-- ============== I18N ============== -->
+<script>
+const i18n = {
+  pl: {
+    brand_tag:"Analityka dla Baselinker",
+    nav_features:"Funkcje", nav_proof:"Klienci", nav_compare:"Porównanie", nav_pricing:"Cennik",
+    cta_top:"Zamów demo →",
+    hero_badge:"Native Baselinker · Polski produkt · GDPR-ready",
+    hero_t1:"Klaviyo dla", hero_t2:"Bez Klaviyo cen.",
+    hero_sub:"W CRM łączy Twoich klientów z Allegro, Amazon i sklepu w jeden profil, liczy LTV, RFM, retencję i prognozuje churn. Wszystko natywnie na Baselinkerze — 2–4× taniej niż konkurencja.",
+    hero_cta1:"Zamów demo na żywo", hero_cta2:"Zobacz u realnego klienta",
+    hero_s1:"Growth / mies.", hero_s2:"taniej niż Klaviyo", hero_s3:"do dashboardu",
+    hero_mock_note:"Pilot: Renew CRM · 5 960 zamówień zsync z BaseLinker",
+    logos_h:"Działa z ekosystemem, którego już używasz",
+    prob_t:"Baselinker zarządza zamówieniami. Nie klientami.",
+    prob_s:"Każde zamówienie traktowane jest osobno. Ten sam klient z 8 zakupami na Allegro i Amazon? Dla BL to 8 osób. Tracisz LTV, segmentację i każdą szansę na powrót.",
+    p1_t:"Nie wiesz, kto jest VIP", p1_d:"Brak Single Customer View. Ten sam klient = N profili. Nie odróżnisz dropshippera od stałego klienta.",
+    p2_t:"Nie znasz LTV ani churn", p2_d:"Ile naprawdę kosztuje pozyskanie klienta? Kiedy odejdzie? BL pokazuje sprzedaż, nie pokazuje retencji.",
+    p3_t:"Klaviyo? Drogo i bez BL", p3_d:"Klaviyo $130+/mies. i brak integracji z Baselinkerem. SALESmanago — €500+. Edrone — bez marketplace'ów.",
+    feat_h_hl:"funkcji", feat_h:"które zmieniają zasady gry",
+    feat_s:"Wszystko zbudowane natywnie na danych Baselinkera. Bez integratorów, bez Zapier, bez opóźnień synca.",
+    ft1:"① Single Customer View", ft2:"② LTV & RFM", ft3:"③ Zwroty", ft4:"④ Email / SMS", ft5:"⑤ Predykcja",
+    f1_t:"Single Customer View z deduplikacją",
+    f1_d:"Łączymy zamówienia z wszystkich kanałów (Allegro, Amazon, Twój sklep) w jeden profil klienta. Heurystyki: email → telefon (E.164) → imię+adres. UI łączenia z podglądem i rollbackiem.",
+    f1_b1:"Automatyczne dopasowanie cross-channel", f1_b2:"Rozpoznawanie NIP (B2B vs B2C)",
+    f1_b3:"Historia kontaktów, telefonów, adresów", f1_b4:"Bezpieczne łączenie z rollbackiem",
+    f1_chs:"Połączone kanały", f1_merge:"Połączono 3 duplikaty z 14 zamówień",
+    f2_t:"LTV, RFM, kohorty retencji",
+    f2_d:"Główny dashboard: LTV po segmencie i kanale, średni koszyk, częstotliwość, krzywe retencji wg miesiąca pierwszego zakupu. Gotowe segmenty RFM aktualizowane automatycznie.",
+    f2_b1:"Segmenty: Champions / Loyal / At Risk / Lost / New", f2_b2:"Drill-down do pojedynczego klienta",
+    f2_b3:"Eksport segmentu CSV / Excel", f2_b4:"Porównanie MoM, YoY",
+    f2_ml:"Krzywa retencji kohort", f2_mt:"Klienci wg miesiąca pierwszego zakupu",
+    f3_t:"Analityka zwrotów i reklamacji",
+    f3_d:"Średnia stopa zwrotów w e-com — 18,1%, w fashion sięga 30%. Tego nikt natywnie nie liczy na BL. My liczymy: po SKU, kategorii, kliencie, kanale.",
+    f3_b1:"Return rate wg SKU / kategorii / klienta / kanału", f3_b2:"Alerty anomalii (\"Allegro return rate ↑22%\")",
+    f3_b3:"Lista \"częstych zwracaczy\" — wyklucz z promocji", f3_b4:"Wpływ na marżę i prognoza",
+    f3_ml:"Return rate wg kanału · ostatnie 30 dni",
+    f3_alert_t:"Wykryto anomalię:", f3_alert_d:"kategoria \"Sukienki letnie\" — return rate wzrósł z 14% do 31% w 7 dni.",
+    f4_t:"Wyzwalane email i SMS",
+    f4_d:"Monetyzacja analityki przez akcję. Win-back po 60/90 dniach, cross-sell po kategorii, post-purchase NPS — wszystko wyzwalane z segmentów RFM. SMS przez SerwerSMS / SMSAPI.",
+    f4_b1:"Szablony PL + EN + RU + UA", f4_b2:"Triggery: RFM, zwroty, abandoned cart",
+    f4_b3:"A/B testy w jednym kliknięciu", f4_b4:"Email przez Mailgun/Resend, SMS lokalnie",
+    f4_ml:"Aktywne kampanie", f4_c1:"Win-back 60 dni", f4_c2:"Cross-sell: kosmetyki", f4_c3:"Post-purchase NPS",
+    f4_c4:"Auto-call (Zadarma)", f4_c4d:"VIP win-back · ostatnia szansa",
+    f5_t:"Predykcja: następny zakup i churn",
+    f5_d:"Model ML na historycznych zamówieniach. Dla każdego klienta — data prawdopodobnego następnego zakupu i ryzyko odejścia (0-100%). Premium-fica w planie Scale.",
+    f5_b1:"Prognoza daty następnego zakupu", f5_b2:"Churn risk score (0-100)",
+    f5_b3:"Auto-trigger gdy ryzyko > 70%", f5_b4:"Integracja z kampaniami win-back",
+    f5_ml:"Top klienci · ryzyko churn (najbliższe 30 dni)",
+    f5_tip:"Auto-trigger: 23 klientów otrzyma kampanię win-back jutro o 10:00",
+    proof_t:"W CRM w akcji u", proof_s:"Polski sprzedawca produktów do pielęgnacji — 5 960 zamówień zsync z BaseLinker, B2B + B2C, 5 języków (PL/EN/RU/UA). Real-time deduplikacja, analityka i triggery — wszystko na żywych danych.",
+    kpi1:"zamówień z BaseLinker", kpi2:"unikalnych klientów (po dedup)", kpi3:"retention 90 dni", kpi4:"do pierwszego dashboardu",
+    quote:"\"Przed W CRM — Excel i ręczne łączenie klientów. Teraz widzę kto z 6 000 zamówień to mój VIP, kto za chwilę odejdzie i co kupić w kampanii win-back. Setup zajął popołudnie.\"",
+    quote_role:"Owner · Renew CRM · Warszawa",
+    cmp_t:"W CRM vs. konkurencja", cmp_s:"Niezależny przegląd rynku — dlaczego nikt inny nie robi tego, co my.",
+    cmp_th:"Funkcja",
+    cmp_r1:"Natywna integracja Baselinker", cmp_r2:"Single Customer View cross-channel",
+    cmp_r3:"LTV / RFM / kohorty", cmp_r4:"Analityka zwrotów (SKU/kanał)",
+    cmp_r5:"Predykcja churn / repurchase", cmp_r6:"Polski produkt + GDPR-ready",
+    cmp_r7:"Cena startowa", cmp_r8:"Setup",
+    prc_t:"Płać za skalę, nie za miejsca", prc_s:"Freemium + per-order tiers. Jak Baselinker — tylko z analityką.",
+    prc_f:"do 200 zam/mies", prc_f1:"Podstawowa analityka", prc_f2:"Deduplikacja klientów", prc_f3:"1 użytkownik",
+    prc_st:"do 1 000 zam/mies", prc_st1:"RFM + kohorty", prc_st2:"Eksporty CSV/XLS", prc_st3:"Email 1k/mies",
+    prc_pop:"Najpopularniejszy", prc_g:"do 5 000 zam/mies",
+    prc_g1:"Predictive LTV + churn", prc_g2:"Analityka zwrotów", prc_g3:"Email/SMS 10k/mies", prc_g4:"3 użytkowników",
+    prc_sc:"do 20 000 zam/mies", prc_sc1:"B2B segmentacja", prc_sc2:"Prognoza popytu", prc_sc3:"API + 10 użytkowników",
+    prc_ent:"Enterprise (20 000+ zam/mies, SLA, dedicated CSM) — od €499/mies.",
+    lead_t:"Zobacz W CRM na Twoich danych Baselinker",
+    lead_s:"Zostaw kontakt — w 24h pokażemy Ci dashboard z Twoimi prawdziwymi zamówieniami. Free trial 14 dni, bez karty.",
+    lf_name:"Imię i nazwisko", lf_co:"Firma (sklep)", lf_vol:"Zamówień / miesiąc", lf_msg:"Wiadomość (opcjonalne)",
+    lf_btn:"Umów demo — to nic nie kosztuje →",
+    lead_ok:"✓ Dziękujemy! Odezwiemy się w 24h.",
+    lead_err:"Coś poszło nie tak. Napisz na biuro@renew-polska.pl",
+    ft_tag:"Klaviyo dla Baselinker. Analityczne CRM dla polskich sprzedawców e-commerce.",
+    ft_p:"Produkt", ft_f:"Funkcje", ft_pr:"Cennik", ft_c:"Porównanie", ft_cs:"Case study",
+    ft_k:"Kontakt", ft_kp:"Konferencja Base 2026 · Warszawa, PL<br>biuro@renew-polska.pl",
+    ft_r:"Wszystkie prawa zastrzeżone"
+  },
+  en: {
+    brand_tag:"Analytics for Baselinker",
+    nav_features:"Features", nav_proof:"Customers", nav_compare:"Compare", nav_pricing:"Pricing",
+    cta_top:"Book demo →",
+    hero_badge:"Native Baselinker · Polish product · GDPR-ready",
+    hero_t1:"Klaviyo for", hero_t2:"Without the price.",
+    hero_sub:"W CRM merges your customers from Allegro, Amazon and your store into one profile, computes LTV, RFM, retention and predicts churn. All native on Baselinker — 2–4× cheaper than the competition.",
+    hero_cta1:"Book a live demo", hero_cta2:"See a real customer",
+    hero_s1:"Growth / month", hero_s2:"cheaper than Klaviyo", hero_s3:"to your dashboard",
+    hero_mock_note:"Pilot: Renew CRM · 5,960 orders synced from BaseLinker",
+    logos_h:"Works with the ecosystem you already use",
+    prob_t:"Baselinker manages orders. Not customers.",
+    prob_s:"Every order is treated separately. The same customer with 8 purchases on Allegro and Amazon? For BL it's 8 different people. You lose LTV, segmentation and every chance to bring them back.",
+    p1_t:"You don't know who's VIP", p1_d:"No Single Customer View. The same customer = N profiles. You can't tell a dropshipper from a regular.",
+    p2_t:"No LTV, no churn signal", p2_d:"What does acquisition really cost? When will they leave? BL shows sales, not retention.",
+    p3_t:"Klaviyo? Expensive, no BL", p3_d:"Klaviyo $130+/mo and no Baselinker integration. SALESmanago — €500+. Edrone — no marketplaces.",
+    feat_h_hl:"features", feat_h:"that change the game",
+    feat_s:"All built natively on Baselinker data. No integrators, no Zapier, no sync lag.",
+    ft1:"① Single Customer View", ft2:"② LTV & RFM", ft3:"③ Returns", ft4:"④ Email / SMS", ft5:"⑤ Predictive",
+    f1_t:"Single Customer View with deduplication",
+    f1_d:"We merge orders from every channel (Allegro, Amazon, your store) into one customer profile. Heuristics: email → phone (E.164) → name+address. Merge UI with preview and rollback.",
+    f1_b1:"Automatic cross-channel matching", f1_b2:"NIP recognition (B2B vs B2C)",
+    f1_b3:"Full contact, phone, address history", f1_b4:"Safe merge with rollback",
+    f1_chs:"Connected channels", f1_merge:"Merged 3 duplicates across 14 orders",
+    f2_t:"LTV, RFM, cohort retention",
+    f2_d:"Main dashboard: LTV by segment and channel, average basket, frequency, retention curves by first-purchase month. RFM segments ready and auto-refreshed.",
+    f2_b1:"Segments: Champions / Loyal / At Risk / Lost / New", f2_b2:"Drill down to a single customer",
+    f2_b3:"Export segment CSV / Excel", f2_b4:"MoM, YoY comparisons",
+    f2_ml:"Cohort retention curves", f2_mt:"Customers by first-purchase month",
+    f3_t:"Returns & refunds analytics",
+    f3_d:"Average e-com return rate — 18.1%, fashion up to 30%. Nobody computes this natively on BL. We do: by SKU, category, customer, channel.",
+    f3_b1:"Return rate by SKU / category / customer / channel", f3_b2:"Anomaly alerts (\"Allegro return rate ↑22%\")",
+    f3_b3:"List of \"frequent returners\" — exclude from promos", f3_b4:"Margin impact and forecast",
+    f3_ml:"Return rate by channel · last 30 days",
+    f3_alert_t:"Anomaly detected:", f3_alert_d:"category \"Summer dresses\" — return rate jumped from 14% to 31% in 7 days.",
+    f4_t:"Triggered email and SMS",
+    f4_d:"Monetize analytics via action. Win-back at 60/90 days, category cross-sell, post-purchase NPS — all triggered from RFM segments. SMS via SerwerSMS / SMSAPI.",
+    f4_b1:"Templates PL + EN + RU + UA", f4_b2:"Triggers: RFM, returns, abandoned cart",
+    f4_b3:"A/B tests in one click", f4_b4:"Email via Mailgun/Resend, SMS local",
+    f4_ml:"Active campaigns", f4_c1:"Win-back 60 days", f4_c2:"Cross-sell: cosmetics", f4_c3:"Post-purchase NPS",
+    f4_c4:"Auto-call (Zadarma)", f4_c4d:"VIP win-back · last chance",
+    f5_t:"Predictive: next purchase and churn",
+    f5_d:"ML model on historical orders. For each customer — likely next-purchase date and churn risk (0-100%). Premium feature in the Scale plan.",
+    f5_b1:"Next-purchase date forecast", f5_b2:"Churn risk score (0-100)",
+    f5_b3:"Auto-trigger when risk > 70%", f5_b4:"Integration with win-back campaigns",
+    f5_ml:"Top customers · churn risk (next 30 days)",
+    f5_tip:"Auto-trigger: 23 customers will get a win-back campaign tomorrow at 10:00",
+    proof_t:"W CRM in action at", proof_s:"A Polish care-products seller — 5,960 orders synced from BaseLinker, B2B + B2C, 5 languages (PL/EN/RU/UA). Real-time dedup, analytics and triggers — all on live data.",
+    kpi1:"orders from BaseLinker", kpi2:"unique customers (after dedup)", kpi3:"90-day retention", kpi4:"to first dashboard",
+    quote:"\"Before W CRM — Excel and manual customer matching. Now I can see who, of 6,000 orders, is my VIP, who's about to churn, and what to put in the win-back campaign. Setup took an afternoon.\"",
+    quote_role:"Owner · Renew CRM · Warsaw",
+    cmp_t:"W CRM vs. competitors", cmp_s:"Independent market review — why nobody else does what we do.",
+    cmp_th:"Feature",
+    cmp_r1:"Native Baselinker integration", cmp_r2:"Single Customer View cross-channel",
+    cmp_r3:"LTV / RFM / cohorts", cmp_r4:"Returns analytics (SKU/channel)",
+    cmp_r5:"Churn / repurchase prediction", cmp_r6:"Polish product + GDPR-ready",
+    cmp_r7:"Starting price", cmp_r8:"Setup",
+    prc_t:"Pay for scale, not seats", prc_s:"Freemium + per-order tiers. Like Baselinker — just with analytics.",
+    prc_f:"up to 200 orders/mo", prc_f1:"Basic analytics", prc_f2:"Customer dedup", prc_f3:"1 user",
+    prc_st:"up to 1,000 orders/mo", prc_st1:"RFM + cohorts", prc_st2:"CSV/XLS exports", prc_st3:"Email 1k/mo",
+    prc_pop:"Most popular", prc_g:"up to 5,000 orders/mo",
+    prc_g1:"Predictive LTV + churn", prc_g2:"Returns analytics", prc_g3:"Email/SMS 10k/mo", prc_g4:"3 users",
+    prc_sc:"up to 20,000 orders/mo", prc_sc1:"B2B segmentation", prc_sc2:"Demand forecasting", prc_sc3:"API + 10 users",
+    prc_ent:"Enterprise (20,000+ orders/mo, SLA, dedicated CSM) — from €499/mo.",
+    lead_t:"See W CRM on your Baselinker data",
+    lead_s:"Leave a contact — within 24h we'll show you a dashboard with your real orders. 14-day free trial, no card.",
+    lf_name:"Full name", lf_co:"Company (shop)", lf_vol:"Orders / month", lf_msg:"Message (optional)",
+    lf_btn:"Book demo — it's free →",
+    lead_ok:"✓ Thanks! We'll be in touch within 24h.",
+    lead_err:"Something went wrong. Email biuro@renew-polska.pl",
+    ft_tag:"Klaviyo for Baselinker. Analytical CRM for Polish e-commerce sellers.",
+    ft_p:"Product", ft_f:"Features", ft_pr:"Pricing", ft_c:"Compare", ft_cs:"Case study",
+    ft_k:"Contact", ft_kp:"Base Conference 2026 · Warsaw, PL<br>biuro@renew-polska.pl",
+    ft_r:"All rights reserved"
+  }
+};
+
+let currentLang = 'pl';
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[lang][key]) el.innerHTML = i18n[lang][key];
+  });
+  document.getElementById('lang-pl').classList.toggle('active', lang === 'pl');
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.title = lang === 'pl' ? 'W CRM — Klaviyo dla Baselinker' : 'W CRM — Klaviyo for Baselinker';
+}
+
+function showFeature(n) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('feature-' + i).classList.toggle('active', i === n);
+  }
+  document.querySelectorAll('.demo-tab').forEach((tab, idx) => {
+    tab.classList.toggle('active', idx === n - 1);
+  });
+}
+
+// === LEAD SUBMISSION ===
+const LEAD_ENDPOINT = "https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOY_ID/exec";
+async function submitLead(e) {
+  e.preventDefault();
+  const form = e.target;
+  const statusEl = document.getElementById('leadStatus');
+  const data = Object.fromEntries(new FormData(form));
+  data.lang = currentLang;
+  data.ts = new Date().toISOString();
+  statusEl.innerText = "...";
+  statusEl.className = "text-sm text-center text-slate-500 min-h-[1.25rem]";
+  try {
+    await fetch(LEAD_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+    statusEl.innerText = i18n[currentLang].lead_ok;
+    statusEl.className = "text-sm text-center text-emerald-600 font-semibold min-h-[1.25rem]";
+    form.reset();
+  } catch (err) {
+    statusEl.innerText = i18n[currentLang].lead_err;
+    statusEl.className = "text-sm text-center text-red-600 min-h-[1.25rem]";
+  }
+}
+
+// === SCROLL REVEAL ===
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => io.observe(el));
+
+// === COUNT-UP ===
+function animateCount(el) {
+  const target = parseFloat(el.getAttribute('data-counter'));
+  const prefix = el.getAttribute('data-prefix') || '';
+  const suffix = el.getAttribute('data-suffix') || '';
+  const decimals = parseInt(el.getAttribute('data-decimals') || '0');
+  const duration = 1400;
+  const start = performance.now();
+  const initial = 0;
+  function frame(now) {
+    const p = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const val = initial + (target - initial) * eased;
+    const num = decimals > 0
+      ? val.toFixed(decimals)
+      : Math.round(val).toLocaleString('pl-PL').replace(/ /g, ',');
+    el.textContent = prefix + num + suffix;
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+const counterIO = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { animateCount(e.target); counterIO.unobserve(e.target); } });
+}, { threshold: .5 });
+document.querySelectorAll('[data-counter]').forEach(el => counterIO.observe(el));
+
+// === LIVE NOTIFICATIONS ===
+const notifData = {
+  pl: [
+    { name: 'Anna K.', city: 'Warszawa', action: 'zarezerwowała demo', time: '2 min temu', icon: '🎯' },
+    { name: 'Piotr M.', city: 'Kraków', action: 'pobrał case study', time: '5 min temu', icon: '📄' },
+    { name: 'Magdalena W.', city: 'Wrocław', action: 'rozpoczęła trial Growth', time: '8 min temu', icon: '🚀' },
+    { name: 'Tomasz S.', city: 'Poznań', action: 'połączył 3 200 klientów', time: '12 min temu', icon: '🔗' },
+    { name: 'Karolina B.', city: 'Gdańsk', action: 'odzyskała 47 klientów (win-back)', time: '18 min temu', icon: '💰' },
+    { name: 'Renew CRM', city: 'Warszawa', action: 'zsynchronizował 5 960 zamówień z BL', time: '23 min temu', icon: '⚡' },
+    { name: 'Aleksander N.', city: 'Łódź', action: 'umówił rozmowę z zespołem', time: '31 min temu', icon: '📞' }
+  ],
+  en: [
+    { name: 'Anna K.', city: 'Warsaw', action: 'booked a demo', time: '2 min ago', icon: '🎯' },
+    { name: 'Piotr M.', city: 'Krakow', action: 'downloaded case study', time: '5 min ago', icon: '📄' },
+    { name: 'Magdalena W.', city: 'Wroclaw', action: 'started Growth trial', time: '8 min ago', icon: '🚀' },
+    { name: 'Tomasz S.', city: 'Poznan', action: 'merged 3,200 customers', time: '12 min ago', icon: '🔗' },
+    { name: 'Karolina B.', city: 'Gdansk', action: 'recovered 47 customers (win-back)', time: '18 min ago', icon: '💰' },
+    { name: 'Renew CRM', city: 'Warsaw', action: 'synced 5,960 orders from BL', time: '23 min ago', icon: '⚡' },
+    { name: 'Aleksander N.', city: 'Lodz', action: 'booked a call with the team', time: '31 min ago', icon: '📞' }
+  ]
+};
+
+let notifIndex = 0;
+function showNextNotif() {
+  const list = notifData[currentLang] || notifData.pl;
+  const data = list[notifIndex % list.length];
+  notifIndex++;
+  const stack = document.getElementById('notifStack');
+  if (!stack) return;
+
+  const el = document.createElement('div');
+  el.className = 'notif';
+  const initials = data.name.split(' ').map(s => s[0]).join('').slice(0,2);
+  el.innerHTML = `
+    <div class="notif-avatar">${data.icon}</div>
+    <div class="notif-body">
+      <div class="notif-title">${data.name} <span style="font-weight:400;color:#64748B;">· ${data.city}</span></div>
+      <div class="notif-text">${data.action}</div>
+      <div class="notif-time"><span class="live-dot" style="width:6px;height:6px;"></span> ${data.time}</div>
+    </div>
+    <div class="notif-close" onclick="this.parentElement.classList.remove('show'); setTimeout(()=>this.parentElement.remove(), 500)">×</div>
+  `;
+  stack.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+
+  // Auto-dismiss after 5.5s
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 600);
+  }, 5500);
+
+  // Keep at most 2 visible
+  const visible = stack.querySelectorAll('.notif');
+  if (visible.length > 2) {
+    const oldest = visible[0];
+    oldest.classList.remove('show');
+    setTimeout(() => oldest.remove(), 600);
+  }
+}
+
+// Start notifications after a short delay; rotate every 7s
+setTimeout(() => {
+  showNextNotif();
+  setInterval(showNextNotif, 7000);
+}, 2500);
+
+// === CHARTS ===
+window.addEventListener('load', () => {
+  // Cohort retention chart
+  new Chart(document.getElementById('cohortChart'), {
+    type: 'line',
+    data: {
+      labels: ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6'],
+      datasets: [
+        { label: 'Jan 2026', data: [100, 48, 36, 30, 28, 25, 23], borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,.12)', tension: .35, fill: true, borderWidth: 2, pointBackgroundColor: '#10B981' },
+        { label: 'Feb 2026', data: [100, 54, 41, 35, 32, 30, null], borderColor: '#34D399', backgroundColor: 'rgba(52,211,153,.12)', tension: .35, fill: true, borderWidth: 2, pointBackgroundColor: '#34D399' },
+        { label: 'Mar 2026', data: [100, 58, 44, 38, 35, null, null], borderColor: '#6EE7B7', backgroundColor: 'rgba(110,231,183,.12)', tension: .35, fill: true, borderWidth: 2, pointBackgroundColor: '#6EE7B7' }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false, responsive: true, animation: { duration: 1400, easing: 'easeOutCubic' },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#64748B' } } },
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', color: '#94A3B8', font: { size: 11 } }, grid: { color: '#F1F5F9' } },
+        x: { ticks: { color: '#94A3B8', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Returns horizontal bar
+  new Chart(document.getElementById('returnsChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Allegro', 'Amazon DE', 'Amazon PL', 'eBay', 'Sklep'],
+      datasets: [{
+        label: 'Return %',
+        data: [22.4, 18.1, 14.2, 11.8, 8.6],
+        backgroundColor: ['#DC2626', '#F59E0B', '#F59E0B', '#10B981', '#10B981'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      maintainAspectRatio: false, responsive: true, animation: { duration: 1200, easing: 'easeOutCubic' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: v => v + '%', color: '#94A3B8', font: { size: 11 } }, grid: { color: '#F1F5F9' } },
+        y: { ticks: { color: '#64748B', font: { size: 12 } }, grid: { display: false } }
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>
